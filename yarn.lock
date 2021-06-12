@@ -1293,6 +1293,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@openzeppelin/contracts@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "@openzeppelin/contracts@npm:4.1.0"
+  checksum: 1fddde14b45568ac724f47b986df214a1e089fcf8d1964fb80fcc297714becec3c1411fbad4ec084e9d1d97ffbcecf47d8587405f8fd82e3335f167cf43cd5f7
+  languageName: node
+  linkType: hard
+
 "@paulrberg/solidity-template@workspace:.":
   version: 0.0.0-use.local
   resolution: "@paulrberg/solidity-template@workspace:."
@@ -1308,6 +1315,7 @@ __metadata:
     "@ethersproject/providers": ^5.2.0
     "@nomiclabs/hardhat-ethers": ^2.0.2
     "@nomiclabs/hardhat-waffle": ^2.0.1
+    "@openzeppelin/contracts": ^4.1.0
     "@typechain/ethers-v5": ^7.0.0
     "@typechain/hardhat": ^2.0.1
     "@types/chai": ^4.2.18
@@ -1326,6 +1334,7 @@ __metadata:
     ethers: ^5.2.0
     fs-extra: ^10.0.0
     hardhat: ^2.3.0
+    hardhat-abi-exporter: ^2.2.1
     hardhat-gas-reporter: ^1.0.4
     husky: ^6.0.0
     lint-staged: ^11.0.0
@@ -7499,6 +7508,15 @@ fsevents@~2.3.1:
   version: 2.1.0
   resolution: "hard-rejection@npm:2.1.0"
   checksum: 27bc09d185ca8131356f0f3391ae5965c5ed8ec9eddf697d604e33c76eb995831e60ac636e5e5839587d0499f29719171c19d0af5fa12e9e7f7c0a1689e22b6f
+  languageName: node
+  linkType: hard
+
+"hardhat-abi-exporter@npm:^2.2.1":
+  version: 2.2.1
+  resolution: "hardhat-abi-exporter@npm:2.2.1"
+  peerDependencies:
+    hardhat: ^2.0.0
+  checksum: f343d5ec2238ac21f4b90a168b67a4ae07bdfc66810886382564dca458acb1ff81684e8e3d24b878279d0e8e747730825c36cac915da8f15c5fa6dcb02a6b2dc
   languageName: node
   linkType: hard
 

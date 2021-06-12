@@ -1,6 +1,7 @@
 import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
+import "hardhat-abi-exporter";
 import "solidity-coverage";
 
 import "./tasks/accounts";
@@ -94,6 +95,13 @@ const config: HardhatUserConfig = {
   typechain: {
     outDir: "typechain",
     target: "ethers-v5",
+  },
+  abiExporter: {
+    path: "./data/abi",
+    clear: true,
+    flat: true,
+    only: [":SpencePence$"],
+    spacing: 2,
   },
 };
 
