@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract SpencerPence is ERC20, Ownable {
+contract SpencePence is ERC20, Ownable {
     address public birthdayBoy;
     uint256 public lastInflationAt;
 
@@ -12,19 +12,19 @@ contract SpencerPence is ERC20, Ownable {
     uint256 private constant SECONDS_PER_YEAR = 31557600 seconds;
     uint8 private constant INITIAL_SUPPLY = 30;
 
-    constructor() ERC20("SpencerPence", "SPNC") {
+    constructor() ERC20("SpencePence", "SPNC") {
         _mint(owner(), _decimalAdjusted(INITIAL_SUPPLY));
         lastInflationAt = SPENCERS_30TH_BIRTHDAY_UTC;
     }
 
     modifier onlyBirthdayBoy() {
-        require(birthdayBoy != address(0), "SpencerPence: No birthday boy is set");
-        require(msg.sender == birthdayBoy, "SpencerPence: Caller is not the birthday boy");
+        require(birthdayBoy != address(0), "SpencePence: No birthday boy is set");
+        require(msg.sender == birthdayBoy, "SpencePence: Caller is not the birthday boy");
         _;
     }
 
     function imTheBirthdayBoy() external {
-        require(birthdayBoy == address(0), "SpencerPence: We already have a birthday boy");
+        require(birthdayBoy == address(0), "SpencePence: We already have a birthday boy");
 
         // will fail without approval from owner
         transferFrom(owner(), msg.sender, balanceOf(owner()));
