@@ -23,12 +23,9 @@ contract SpencePence is ERC20, Ownable {
         _;
     }
 
-    function imTheBirthdayBoy() external {
-        require(birthdayBoy == address(0), "SpencePence: We already have a birthday boy");
-
-        // will fail without approval from owner
-        transferFrom(owner(), msg.sender, balanceOf(owner()));
-        birthdayBoy = msg.sender;
+    function setBirthdayBoy(address newBirthdayBoy) external onlyOwner {
+        require(newBirthdayBoy != address(0), "SpencePence: Invalid birthday boy address");
+        birthdayBoy = newBirthdayBoy;
     }
 
     function claimInflation() external onlyBirthdayBoy {

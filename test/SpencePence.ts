@@ -4,10 +4,10 @@ import { expect } from "chai";
 
 import { SpencePence } from "../typechain";
 
-async function setBirthdayBoy(spencePence: SpencePence, admin: SignerWithAddress, birthdayBoy: SignerWithAddress) {
+async function sendSupplyToBirthdayBoy(spencePence: SpencePence, admin: SignerWithAddress) {
   const ownerBalance = await spencePence.balanceOf(admin.address);
-  await spencePence.connect(admin).approve(birthdayBoy.address, ownerBalance);
-  await spencePence.connect(birthdayBoy).imTheBirthdayBoy();
+  const birthdayBoy = await spencePence.birthdayBoy();
+  await spencePence.transfer(birthdayBoy, ownerBalance);
 }
 
 async function expectHasPence(spencePence: SpencePence, account: SignerWithAddress, amount: number) {
@@ -54,28 +54,24 @@ describe("Unit tests", function () {
       expect(actualInitialSupply).to.equal(await spencePence.totalSupply());
     });
 
-    it("should make the caller the birthday boy if approved", async function () {
-      await setBirthdayBoy(spencePence, admin, birthdayBoy);
+    it("should set the birthday boy if owner", async function () {
+      await spencePence.connect(admin).setBirthdayBoy(birthdayBoy.address);
       expect(await spencePence.birthdayBoy()).to.equal(birthdayBoy.address);
-      expect(await spencePence.balanceOf(admin.address)).to.equal(0);
-      expect(await spencePence.balanceOf(birthdayBoy.address)).to.equal(await spencePence.totalSupply());
     });
 
-    it("should fail to set the birthday boy if already set", async function () {
-      await setBirthdayBoy(spencePence, admin, birthdayBoy);
-      await expect(setBirthdayBoy(spencePence, admin, notBirthdayBoy)).to.be.revertedWith(
-        "SpencePence: We already have a birthday boy",
-      );
-    });
+    // it("should fail to set the birthday boy if zero address", async function () {
+    //   await expect(spencePence.connect(admin).setBirthdayBoy(0)).to.be.revertedWith("SpencePence: Invalid birthday boy address")
+    // });
 
-    it("should fail to make the caller the birthday boy if not approved", async function () {
-      await expect(spencePence.connect(notBirthdayBoy).imTheBirthdayBoy()).to.be.revertedWith(
-        "ERC20: transfer amount exceeds allowance",
+    it("should fail to set the birthday boy if not the owner", async function () {
+      await expect(spencePence.connect(birthdayBoy).setBirthdayBoy(birthdayBoy.address)).to.be.revertedWith(
+        "Ownable: caller is not the owner",
       );
     });
 
     it("should inflate relative to Spence's age", async function () {
-      await setBirthdayBoy(spencePence, admin, birthdayBoy);
+      await spencePence.connect(admin).setBirthdayBoy(birthdayBoy.address);
+      await sendSupplyToBirthdayBoy(spencePence, admin);
 
       const spences30thBirthdayUtcSeconds = 1622692800;
       const oneYearSeconds = 31557600;
@@ -95,7 +91,8 @@ describe("Unit tests", function () {
     });
 
     it("should only allow claiming inflation by the birthday boy", async function () {
-      await setBirthdayBoy(spencePence, admin, birthdayBoy);
+      await spencePence.connect(admin).setBirthdayBoy(birthdayBoy.address);
+      await sendSupplyToBirthdayBoy(spencePence, admin);
       await expect(spencePence.connect(notBirthdayBoy).claimInflation()).to.be.revertedWith(
         "SpencePence: Caller is not the birthday boy",
       );

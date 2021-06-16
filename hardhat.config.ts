@@ -69,6 +69,12 @@ const config: HardhatUserConfig = {
     kovan: createTestnetConfig("kovan"),
     rinkeby: createTestnetConfig("rinkeby"),
     ropsten: createTestnetConfig("ropsten"),
+    mainnet: {
+      url: "https://mainnet.infura.io/v3/" + infuraApiKey,
+      accounts: {
+        mnemonic,
+      },
+    },
   },
   paths: {
     artifacts: "./artifacts",
