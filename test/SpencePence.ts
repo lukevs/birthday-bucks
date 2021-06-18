@@ -8,20 +8,9 @@ import { SpencePence } from "../typechain";
 const SPENCERS_BIRTHDAY_UTC = 675921600;
 const SECONDS_PER_YEAR = 31557600;
 
-async function expectHasPence(spencePence: SpencePence, account: SignerWithAddress, amount: BigNumber) {
-  const actualAmount = await spencePence.balanceOf(account.address);
-  expect(actualAmount).to.equal(amount);
-}
-
 async function timeTravelTo(utcSeconds: number) {
   await ethers.provider.send("evm_setNextBlockTimestamp", [utcSeconds]);
   await ethers.provider.send("evm_mine", []);
-}
-
-async function asPence(amount: number, spencePence: SpencePence) {
-  return BigNumber.from(10)
-    .pow(await spencePence.decimals())
-    .mul(amount);
 }
 
 describe("Unit tests", function () {
@@ -37,6 +26,21 @@ describe("Unit tests", function () {
   describe("SpencePence", function () {
     let spencePence: SpencePence;
 
+    async function asPence(amount: number) {
+      return BigNumber.from(10)
+        .pow(await spencePence.decimals())
+        .mul(amount);
+    }
+
+    async function expectBalance(account: SignerWithAddress, amount: BigNumber) {
+      const actualAmount = await spencePence.balanceOf(account.address);
+      expect(actualAmount).to.equal(amount);
+    }
+
+    async function expectBirthdayBoyBalance(amountExcludingSupply: BigNumber) {
+      await expectBalance(birthdayBoy, await (await spencePence.totalSupply()).add(amountExcludingSupply));
+    }
+
     beforeEach(async function () {
       const SpencePenceContract = await ethers.getContractFactory("SpencePence");
       spencePence = await SpencePenceContract.deploy(birthdayBoy.address);
@@ -47,7 +51,7 @@ describe("Unit tests", function () {
       const latestBlockTimestamp = (await ethers.provider.getBlock(latestBlockNumber)).timestamp;
       const spencersAgeSeconds = latestBlockTimestamp - SPENCERS_BIRTHDAY_UTC;
 
-      const expectedInitialSupply = (await asPence(1, spencePence)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
+      const expectedInitialSupply = (await asPence(1)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
 
       const actualInitialSupply = await spencePence.balanceOf(birthdayBoy.address);
 
@@ -56,41 +60,45 @@ describe("Unit tests", function () {
     });
 
     it("should support transfers back and forth", async function () {
-      let birthdayBoyBalance: BigNumber = await spencePence.totalSupply();
+      let birthdayBoyBalanceExcludingSupply: BigNumber = BigNumber.from(0);
       let notBirthdayBoyBalance: BigNumber = BigNumber.from(0);
 
-      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
-      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
+      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
+      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
 
-      const amountGivenAway = await asPence(15, spencePence);
+      const amountGivenAway = await asPence(15);
       await spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, amountGivenAway);
 
-      birthdayBoyBalance = (await spencePence.totalSupply()).sub(amountGivenAway);
-      notBirthdayBoyBalance = amountGivenAway;
+      birthdayBoyBalanceExcludingSupply = birthdayBoyBalanceExcludingSupply.sub(amountGivenAway);
+      notBirthdayBoyBalance = notBirthdayBoyBalance.add(amountGivenAway);
 
-      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
-      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
+      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
+      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
 
-      const amountGivenBack = await asPence(10, spencePence);
+      const amountGivenBack = await asPence(10);
       await spencePence.connect(notBirthdayBoy).transfer(birthdayBoy.address, amountGivenBack);
 
-      birthdayBoyBalance = (await spencePence.totalSupply()).sub(amountGivenAway).add(amountGivenBack);
-      notBirthdayBoyBalance = amountGivenAway.sub(amountGivenBack);
+      birthdayBoyBalanceExcludingSupply = birthdayBoyBalanceExcludingSupply.add(amountGivenBack);
+      notBirthdayBoyBalance = notBirthdayBoyBalance.sub(amountGivenBack);
 
-      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
-      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
+      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
+      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
 
-      const amountGivenAwayAgain = await asPence(20, spencePence);
+      const amountGivenAwayAgain = await asPence(20);
       await spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, amountGivenAwayAgain);
 
-      birthdayBoyBalance = (await spencePence.totalSupply())
-        .sub(amountGivenAway)
-        .add(amountGivenBack)
-        .sub(amountGivenAwayAgain);
-      notBirthdayBoyBalance = amountGivenAway.sub(amountGivenBack).add(amountGivenAwayAgain);
+      birthdayBoyBalanceExcludingSupply = birthdayBoyBalanceExcludingSupply.sub(amountGivenAwayAgain);
+      notBirthdayBoyBalance = notBirthdayBoyBalance.add(amountGivenAwayAgain);
 
-      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
-      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
+      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
+      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
     });
+
+    /**
+     * Tests todo
+     * - test allowance
+     * - test that no one can transfer more than their balance
+     * - test that supply increases with spencer's age
+     */
   });
 });
