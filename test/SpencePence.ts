@@ -79,10 +79,17 @@ describe("Unit tests", function () {
       await expectBalance(notBirthdayBoy, amountGivenAway.add(amountGivenAwayAgain).sub(amountGivenBack));
     });
 
+    it("should not allow transfers larger than supply", async function () {
+      await expect(
+        spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, await asPence(1000)),
+      ).to.be.revertedWith("SpencePence: transfer amount exceeds balance");
+      await expect(
+        spencePence.connect(notBirthdayBoy).transfer(birthdayBoy.address, await asPence(1000)),
+      ).to.be.revertedWith("SpencePence: transfer amount exceeds balance");
+    });
+
     /**
      * Tests todo
-     * - test allowance
-     * - test that no one can transfer more than their balance
      * - test that supply increases with spencer's age
      */
   });

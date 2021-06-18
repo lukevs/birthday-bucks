@@ -5,9 +5,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-// TODO remove
-import "hardhat/console.sol";
-
 contract SpencePence is Context, IERC20, IERC20Metadata {
     address public birthdayBoy;
 
