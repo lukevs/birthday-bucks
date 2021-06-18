@@ -37,8 +37,8 @@ describe("Unit tests", function () {
       expect(actualAmount).to.equal(amount);
     }
 
-    async function expectBirthdayBoyBalance(amountExcludingSupply: BigNumber) {
-      await expectBalance(birthdayBoy, await (await spencePence.totalSupply()).add(amountExcludingSupply));
+    async function expectBirthdayBoyBalance(amountWithoutSupply: BigNumber) {
+      await expectBalance(birthdayBoy, (await spencePence.totalSupply()).add(amountWithoutSupply));
     }
 
     beforeEach(async function () {
@@ -52,7 +52,6 @@ describe("Unit tests", function () {
       const spencersAgeSeconds = latestBlockTimestamp - SPENCERS_BIRTHDAY_UTC;
 
       const expectedInitialSupply = (await asPence(1)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
-
       const actualInitialSupply = await spencePence.balanceOf(birthdayBoy.address);
 
       expect(actualInitialSupply).to.equal(expectedInitialSupply);
@@ -60,38 +59,24 @@ describe("Unit tests", function () {
     });
 
     it("should support transfers back and forth", async function () {
-      let birthdayBoyBalanceExcludingSupply: BigNumber = BigNumber.from(0);
-      let notBirthdayBoyBalance: BigNumber = BigNumber.from(0);
-
-      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
-      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
+      await expectBirthdayBoyBalance(BigNumber.from(0));
+      await expectBalance(notBirthdayBoy, BigNumber.from(0));
 
       const amountGivenAway = await asPence(15);
-      await spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, amountGivenAway);
-
-      birthdayBoyBalanceExcludingSupply = birthdayBoyBalanceExcludingSupply.sub(amountGivenAway);
-      notBirthdayBoyBalance = notBirthdayBoyBalance.add(amountGivenAway);
-
-      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
-      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
-
       const amountGivenBack = await asPence(10);
-      await spencePence.connect(notBirthdayBoy).transfer(birthdayBoy.address, amountGivenBack);
-
-      birthdayBoyBalanceExcludingSupply = birthdayBoyBalanceExcludingSupply.add(amountGivenBack);
-      notBirthdayBoyBalance = notBirthdayBoyBalance.sub(amountGivenBack);
-
-      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
-      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
-
       const amountGivenAwayAgain = await asPence(20);
+
+      await spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, amountGivenAway);
+      await expectBirthdayBoyBalance(amountGivenAway.mul(-1));
+      await expectBalance(notBirthdayBoy, amountGivenAway);
+
+      await spencePence.connect(notBirthdayBoy).transfer(birthdayBoy.address, amountGivenBack);
+      await expectBirthdayBoyBalance(amountGivenBack.sub(amountGivenAway));
+      await expectBalance(notBirthdayBoy, amountGivenAway.sub(amountGivenBack));
+
       await spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, amountGivenAwayAgain);
-
-      birthdayBoyBalanceExcludingSupply = birthdayBoyBalanceExcludingSupply.sub(amountGivenAwayAgain);
-      notBirthdayBoyBalance = notBirthdayBoyBalance.add(amountGivenAwayAgain);
-
-      await expectBirthdayBoyBalance(birthdayBoyBalanceExcludingSupply);
-      await expectBalance(notBirthdayBoy, notBirthdayBoyBalance);
+      await expectBirthdayBoyBalance(amountGivenBack.sub(amountGivenAway).sub(amountGivenAwayAgain));
+      await expectBalance(notBirthdayBoy, amountGivenAway.add(amountGivenAwayAgain).sub(amountGivenBack));
     });
 
     /**
