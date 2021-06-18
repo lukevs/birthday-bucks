@@ -5,6 +5,8 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
+import "hardhat/console.sol";
+
 contract SpencePence is Context, IERC20, IERC20Metadata {
     address public birthdayBoy;
 
@@ -128,15 +130,15 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
 
     function _reduceBirthdayBoyBalance(uint256 amount) private {
         uint256 remainingAmount = amount;
-
         uint256 accruedSupply = _getBirthdayBoyAccruedSupply();
+
         if (remainingAmount > 0 && accruedSupply > 0) {
             if (remainingAmount >= accruedSupply) {
-                remainingAmount -= accruedSupply;
                 _totalSupplySpentByBirthdayBoy += accruedSupply;
+                remainingAmount -= accruedSupply;
             } else {
+                _totalSupplySpentByBirthdayBoy += remainingAmount;
                 remainingAmount = 0;
-                _totalSupplySpentByBirthdayBoy += (accruedSupply - remainingAmount);
             }
         }
 

@@ -1,24 +1,16 @@
-import hre, { ethers } from "hardhat";
+import { ethers } from "hardhat";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/dist/src/signer-with-address";
 import { expect } from "chai";
+import { BigNumber } from "@ethersproject/bignumber";
 
 import { SpencePence } from "../typechain";
 
 const SPENCERS_BIRTHDAY_UTC = 675921600;
 const SECONDS_PER_YEAR = 31557600;
 
-async function sendSupplyToBirthdayBoy(spencePence: SpencePence, admin: SignerWithAddress) {
-  const ownerBalance = await spencePence.balanceOf(admin.address);
-  const birthdayBoy = await spencePence.birthdayBoy();
-  await spencePence.transfer(birthdayBoy, ownerBalance);
-}
-
-async function expectHasPence(spencePence: SpencePence, account: SignerWithAddress, amount: number) {
-  const expectedAmount = ethers.BigNumber.from(10)
-    .pow(await spencePence.decimals())
-    .mul(amount);
+async function expectHasPence(spencePence: SpencePence, account: SignerWithAddress, amount: BigNumber) {
   const actualAmount = await spencePence.balanceOf(account.address);
-  expect(actualAmount).to.equal(expectedAmount);
+  expect(actualAmount).to.equal(amount);
 }
 
 async function timeTravelTo(utcSeconds: number) {
@@ -26,16 +18,20 @@ async function timeTravelTo(utcSeconds: number) {
   await ethers.provider.send("evm_mine", []);
 }
 
+async function asPence(amount: number, spencePence: SpencePence) {
+  return BigNumber.from(10)
+    .pow(await spencePence.decimals())
+    .mul(amount);
+}
+
 describe("Unit tests", function () {
-  //let admin: SignerWithAddress;
   let birthdayBoy: SignerWithAddress;
-  // let notBirthdayBoy: SignerWithAddress;
+  let notBirthdayBoy: SignerWithAddress;
 
   before(async function () {
-    const signers: SignerWithAddress[] = await hre.ethers.getSigners();
-    //admin = signers[0];
+    const signers: SignerWithAddress[] = await ethers.getSigners();
     birthdayBoy = signers[1];
-    // notBirthdayBoy = signers[2];
+    notBirthdayBoy = signers[2];
   });
 
   describe("SpencePence", function () {
@@ -46,15 +42,12 @@ describe("Unit tests", function () {
       spencePence = await SpencePenceContract.deploy(birthdayBoy.address);
     });
 
-    it("birthday boy should have full supply on deploy", async function () {
+    it("should give the birthday boy the full supply on deploy", async function () {
       const latestBlockNumber = await ethers.provider.getBlockNumber();
       const latestBlockTimestamp = (await ethers.provider.getBlock(latestBlockNumber)).timestamp;
       const spencersAgeSeconds = latestBlockTimestamp - SPENCERS_BIRTHDAY_UTC;
 
-      const expectedInitialSupply = ethers.BigNumber.from(10)
-        .pow(await spencePence.decimals())
-        .mul(spencersAgeSeconds)
-        .div(SECONDS_PER_YEAR);
+      const expectedInitialSupply = (await asPence(1, spencePence)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
 
       const actualInitialSupply = await spencePence.balanceOf(birthdayBoy.address);
 
@@ -62,48 +55,42 @@ describe("Unit tests", function () {
       expect(actualInitialSupply).to.equal(await spencePence.totalSupply());
     });
 
-    // it("should set the birthday boy if owner", async function () {
-    //   await spencePence.connect(admin).setBirthdayBoy(birthdayBoy.address);
-    //   expect(await spencePence.birthdayBoy()).to.equal(birthdayBoy.address);
-    // });
+    it("should support transfers back and forth", async function () {
+      let birthdayBoyBalance: BigNumber = await spencePence.totalSupply();
+      let notBirthdayBoyBalance: BigNumber = BigNumber.from(0);
 
-    // // it("should fail to set the birthday boy if zero address", async function () {
-    // //   await expect(spencePence.connect(admin).setBirthdayBoy(0)).to.be.revertedWith("SpencePence: Invalid birthday boy address")
-    // // });
+      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
+      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
 
-    // it("should fail to set the birthday boy if not the owner", async function () {
-    //   await expect(spencePence.connect(birthdayBoy).setBirthdayBoy(birthdayBoy.address)).to.be.revertedWith(
-    //     "Ownable: caller is not the owner",
-    //   );
-    // });
+      const amountGivenAway = await asPence(15, spencePence);
+      await spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, amountGivenAway);
 
-    // it("should inflate relative to Spence's age", async function () {
-    //   await spencePence.connect(admin).setBirthdayBoy(birthdayBoy.address);
-    //   await sendSupplyToBirthdayBoy(spencePence, admin);
+      birthdayBoyBalance = (await spencePence.totalSupply()).sub(amountGivenAway);
+      notBirthdayBoyBalance = amountGivenAway;
 
-    //   const spences30thBirthdayUtcSeconds = 1622692800;
-    //   const oneYearSeconds = 31557600;
+      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
+      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
 
-    //   const spences32ndBirthdayUtcSeconds = spences30thBirthdayUtcSeconds + oneYearSeconds * 2;
-    //   await timeTravelTo(spences32ndBirthdayUtcSeconds);
+      const amountGivenBack = await asPence(10, spencePence);
+      await spencePence.connect(notBirthdayBoy).transfer(birthdayBoy.address, amountGivenBack);
 
-    //   await expectHasPence(spencePence, birthdayBoy, 30);
-    //   await spencePence.connect(birthdayBoy).claimInflation();
-    //   await expectHasPence(spencePence, birthdayBoy, 32);
-    // });
+      birthdayBoyBalance = (await spencePence.totalSupply()).sub(amountGivenAway).add(amountGivenBack);
+      notBirthdayBoyBalance = amountGivenAway.sub(amountGivenBack);
 
-    // it("should not allow claiming inflation without a birthday boy", async function () {
-    //   await expect(spencePence.connect(birthdayBoy).claimInflation()).to.be.revertedWith(
-    //     "SpencePence: No birthday boy is set",
-    //   );
-    // });
+      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
+      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
 
-    // it("should only allow claiming inflation by the birthday boy", async function () {
-    //   await spencePence.connect(admin).setBirthdayBoy(birthdayBoy.address);
-    //   await sendSupplyToBirthdayBoy(spencePence, admin);
-    //   await expect(spencePence.connect(notBirthdayBoy).claimInflation()).to.be.revertedWith(
-    //     "SpencePence: Caller is not the birthday boy",
-    //   );
-    // });
+      const amountGivenAwayAgain = await asPence(20, spencePence);
+      await spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, amountGivenAwayAgain);
+
+      birthdayBoyBalance = (await spencePence.totalSupply())
+        .sub(amountGivenAway)
+        .add(amountGivenBack)
+        .sub(amountGivenAwayAgain);
+      notBirthdayBoyBalance = amountGivenAway.sub(amountGivenBack).add(amountGivenAwayAgain);
+
+      await expectHasPence(spencePence, birthdayBoy, birthdayBoyBalance);
+      await expectHasPence(spencePence, notBirthdayBoy, notBirthdayBoyBalance);
+    });
   });
 });
