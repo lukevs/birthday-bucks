@@ -51,11 +51,11 @@ describe("Unit tests", function () {
       const latestBlockTimestamp = (await ethers.provider.getBlock(latestBlockNumber)).timestamp;
       const spencersAgeSeconds = latestBlockTimestamp - SPENCERS_BIRTHDAY_UTC;
 
-      const expectedInitialSupply = (await asPence(1)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
-      const actualInitialSupply = await spencePence.balanceOf(birthdayBoy.address);
+      const expectedSupply = (await asPence(1)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
+      const actualSupply = await spencePence.balanceOf(birthdayBoy.address);
 
-      expect(actualInitialSupply).to.equal(expectedInitialSupply);
-      expect(actualInitialSupply).to.equal(await spencePence.totalSupply());
+      expect(actualSupply).to.equal(expectedSupply);
+      expect(actualSupply).to.equal(await spencePence.totalSupply());
     });
 
     it("should support transfers back and forth", async function () {
@@ -83,14 +83,23 @@ describe("Unit tests", function () {
       await expect(
         spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, await asPence(1000)),
       ).to.be.revertedWith("SpencePence: transfer amount exceeds balance");
+
       await expect(
         spencePence.connect(notBirthdayBoy).transfer(birthdayBoy.address, await asPence(1000)),
       ).to.be.revertedWith("SpencePence: transfer amount exceeds balance");
     });
 
-    /**
-     * Tests todo
-     * - test that supply increases with spencer's age
-     */
+    it("should increase supply relative to spencer's age", async function () {
+      const spencersAgeYears = 1000;
+      const spencersAgeSeconds = SECONDS_PER_YEAR * spencersAgeYears;
+      const futureTimestamp = SPENCERS_BIRTHDAY_UTC + spencersAgeSeconds;
+      await timeTravelTo(futureTimestamp);
+
+      const expectedSupply = (await asPence(1)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
+      const actualSupply = await spencePence.balanceOf(birthdayBoy.address);
+
+      expect(actualSupply).to.equal(expectedSupply);
+      expect(actualSupply).to.equal(await spencePence.totalSupply());
+    });
   });
 });
