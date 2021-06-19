@@ -141,7 +141,7 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
         }
 
         if (remainingAmount > 0) {
-            require(_balances[birthdayBoy] >= remainingAmount, "SpencePence: transfer amount exceeds balance");
+            assert(_balances[birthdayBoy] >= remainingAmount);
             _balances[birthdayBoy] -= remainingAmount;
         }
     }
