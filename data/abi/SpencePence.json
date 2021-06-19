@@ -41,6 +41,25 @@
       {
         "indexed": true,
         "internalType": "address",
+        "name": "previousBirthdayBoy",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "newBirthdayBoy",
+        "type": "address"
+      }
+    ],
+    "name": "BirthdayBoyTransferred",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
         "name": "from",
         "type": "address"
       },
@@ -261,6 +280,19 @@
         "type": "bool"
       }
     ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "newBirthdayBoy",
+        "type": "address"
+      }
+    ],
+    "name": "transferBirthday",
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },

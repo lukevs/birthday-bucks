@@ -13,6 +13,12 @@ async function timeTravelTo(utcSeconds: number) {
   await ethers.provider.send("evm_mine", []);
 }
 
+async function timeTravelToSpencersAge(spencersAgeYears: number) {
+  const spencersAgeSeconds = SECONDS_PER_YEAR * spencersAgeYears;
+  const timestamp = SPENCERS_BIRTHDAY_UTC + spencersAgeSeconds;
+  await timeTravelTo(timestamp);
+}
+
 describe("Unit tests", function () {
   let birthdayBoy: SignerWithAddress;
   let notBirthdayBoy: SignerWithAddress;
@@ -89,11 +95,25 @@ describe("Unit tests", function () {
       ).to.be.revertedWith("SpencePence: transfer amount exceeds balance");
     });
 
+    it("should support transfering the birthday boy", async function () {
+      await timeTravelToSpencersAge(50);
+      await spencePence.connect(birthdayBoy).transferBirthday(notBirthdayBoy.address);
+
+      const supplyAt50 = await spencePence.totalSupply();
+      expect(await spencePence.balanceOf(birthdayBoy.address)).to.equal(supplyAt50);
+      expect(await spencePence.balanceOf(notBirthdayBoy.address)).to.equal(0);
+
+      await timeTravelToSpencersAge(60);
+      expect(await spencePence.balanceOf(birthdayBoy.address)).to.equal(supplyAt50);
+      expect(await spencePence.balanceOf(notBirthdayBoy.address)).to.equal(
+        (await spencePence.totalSupply()).sub(supplyAt50),
+      );
+    });
+
     it("should increase supply relative to spencer's age", async function () {
       const spencersAgeYears = 1000;
       const spencersAgeSeconds = SECONDS_PER_YEAR * spencersAgeYears;
-      const futureTimestamp = SPENCERS_BIRTHDAY_UTC + spencersAgeSeconds;
-      await timeTravelTo(futureTimestamp);
+      await timeTravelToSpencersAge(spencersAgeYears);
 
       const expectedSupply = (await asPence(1)).mul(spencersAgeSeconds).div(SECONDS_PER_YEAR);
       const actualSupply = await spencePence.balanceOf(birthdayBoy.address);

@@ -18,9 +18,16 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
     uint256 private constant SPENCERS_BIRTHDAY_UTC = 675921600 seconds;
     uint256 private constant SECONDS_PER_YEAR = 31557600 seconds;
 
+    event BirthdayBoyTransferred(address indexed previousBirthdayBoy, address indexed newBirthdayBoy);
+
     constructor(address _birthdayBoy) {
         require(_birthdayBoy != address(0), "Birthday boy cannot be the zero address");
-        birthdayBoy = _birthdayBoy;
+        _setBirthdayBoy(_birthdayBoy);
+    }
+
+    modifier onlyBirthdayBoy() {
+        require(birthdayBoy == _msgSender(), "SpencePence: caller is not the owner");
+        _;
     }
 
     function name() public pure override returns (string memory) {
@@ -87,6 +94,24 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
         unchecked { _approve(_msgSender(), spender, currentAllowance - subtractedValue); }
 
         return true;
+    }
+
+    function transferBirthday(address newBirthdayBoy) public virtual onlyBirthdayBoy {
+        require(newBirthdayBoy != address(0), "SpencePence: new birthday boy is the zero address");
+        _setBirthdayBoy(newBirthdayBoy);
+    }
+
+    function _setBirthdayBoy(address newBirthdayBoy) private {
+        address oldBirthdayBoy = birthdayBoy;
+        birthdayBoy = newBirthdayBoy;
+
+        if (oldBirthdayBoy != address(0)) {
+            uint256 accruedSupply = _getBirthdayBoyAccruedSupply();
+            _balances[oldBirthdayBoy] = accruedSupply;
+            _totalSupplySpentByBirthdayBoy += accruedSupply;
+        }
+
+        emit BirthdayBoyTransferred(oldBirthdayBoy, newBirthdayBoy);
     }
 
     function _getBirthdayBoyAccruedSupply() private view returns (uint256) {
