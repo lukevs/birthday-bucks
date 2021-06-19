@@ -42,7 +42,7 @@ contract BirthdayBucks is Context, IERC20, IERC20Metadata {
     }
 
     function symbol() public view override returns (string memory) {
-        return _name;
+        return _symbol;
     }
 
     function decimals() public pure override returns (uint8) {
