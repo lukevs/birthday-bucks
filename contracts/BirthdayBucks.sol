@@ -5,41 +5,52 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 
-contract SpencePence is Context, IERC20, IERC20Metadata {
-    address public birthdayBoy;
+contract BirthdayBucks is Context, IERC20, IERC20Metadata {
+    address private _birthdayBud;
+    string private _name;
+    string private _symbol;
+    uint256 private _birthdayUtcSeconds;
+    uint256 private _totalSupplySpentByBirthdayBud = 0;
 
     mapping(address => uint256) private _balances;
     mapping(address => mapping(address => uint256)) private _allowances;
 
-    uint256 private _totalSupplySpentByBirthdayBoy = 0;
-
-    string private constant NAME = "SpencePence";
-    string private constant SYMBOL = "SPNC";
-    uint256 private constant SPENCERS_BIRTHDAY_UTC = 675921600 seconds;
     uint256 private constant SECONDS_PER_YEAR = 31557600 seconds;
 
-    event BirthdayBoyTransferred(address indexed previousBirthdayBoy, address indexed newBirthdayBoy);
+    event BirthdayBudTransferred(address indexed previousBirthdayBud, address indexed newBirthdayBud);
 
-    constructor(address _birthdayBoy) {
-        require(_birthdayBoy != address(0), "Birthday boy cannot be the zero address");
-        _setBirthdayBoy(_birthdayBoy);
+    constructor(
+        string memory name_,
+        string memory symbol_,
+        address birthdayBud_,
+        uint256 birthdayUtcSeconds_
+    ) {
+        require(birthdayBud_ != address(0), "BirthdayBucks: Birthday bud cannot be the zero address");
+        _name = name_;
+        _symbol = symbol_;
+        _birthdayUtcSeconds = birthdayUtcSeconds_;
+        _setBirthdayBud(birthdayBud_);
     }
 
-    modifier onlyBirthdayBoy() {
-        require(birthdayBoy == _msgSender(), "SpencePence: caller is not the owner");
+    modifier onlyBirthdayBud() {
+        require(_birthdayBud == _msgSender(), "BirthdayBucks: caller is not the owner");
         _;
     }
 
-    function name() public pure override returns (string memory) {
-        return NAME;
+    function name() public view override returns (string memory) {
+        return _name;
     }
 
-    function symbol() public pure override returns (string memory) {
-        return SYMBOL;
+    function symbol() public view override returns (string memory) {
+        return _symbol;
     }
 
     function decimals() public pure override returns (uint8) {
         return 18;
+    }
+
+    function birthdayBud() public view returns (address) {
+        return _birthdayBud;
     }
 
     function totalSupply() public view override returns (uint256) {
@@ -48,8 +59,8 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
 
     function balanceOf(address account) public view override returns (uint256) {
         uint256 accountBalance = _balances[account];
-        if (_isBirthdayBoy(account)) {
-            return accountBalance + _getBirthdayBoyAccruedSupply();
+        if (_isBirthdayBud(account)) {
+            return accountBalance + _getBirthdayBudAccruedSupply();
         } else {
             return accountBalance;
         }
@@ -77,7 +88,7 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
         _transfer(sender, recipient, amount);
 
         uint256 currentAllowance = _allowances[sender][_msgSender()];
-        require(currentAllowance >= amount, "SpencePence: transfer amount exceeds allowance");
+        require(currentAllowance >= amount, "BirthdayBucks: transfer amount exceeds allowance");
         unchecked { _approve(sender, _msgSender(), currentAllowance - amount); }
 
         return true;
@@ -90,32 +101,32 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
 
     function decreaseAllowance(address spender, uint256 subtractedValue) public returns (bool) {
         uint256 currentAllowance = _allowances[_msgSender()][spender];
-        require(currentAllowance >= subtractedValue, "SpencePence: decreased allowance below zero");
+        require(currentAllowance >= subtractedValue, "BirthdayBucks: decreased allowance below zero");
         unchecked { _approve(_msgSender(), spender, currentAllowance - subtractedValue); }
 
         return true;
     }
 
-    function transferBirthday(address newBirthdayBoy) public virtual onlyBirthdayBoy {
-        require(newBirthdayBoy != address(0), "SpencePence: new birthday boy is the zero address");
-        _setBirthdayBoy(newBirthdayBoy);
+    function transferBirthday(address newBirthdayBud) public virtual onlyBirthdayBud {
+        require(newBirthdayBud != address(0), "BirthdayBucks: new birthday bud is the zero address");
+        _setBirthdayBud(newBirthdayBud);
     }
 
-    function _setBirthdayBoy(address newBirthdayBoy) private {
-        address oldBirthdayBoy = birthdayBoy;
-        birthdayBoy = newBirthdayBoy;
+    function _setBirthdayBud(address newBirthdayBud) private {
+        address oldBirthdayBud = _birthdayBud;
+        _birthdayBud = newBirthdayBud;
 
-        if (oldBirthdayBoy != address(0)) {
-            uint256 accruedSupply = _getBirthdayBoyAccruedSupply();
-            _balances[oldBirthdayBoy] = accruedSupply;
-            _totalSupplySpentByBirthdayBoy += accruedSupply;
+        if (oldBirthdayBud != address(0)) {
+            uint256 accruedSupply = _getBirthdayBudAccruedSupply();
+            _balances[oldBirthdayBud] = accruedSupply;
+            _totalSupplySpentByBirthdayBud += accruedSupply;
         }
 
-        emit BirthdayBoyTransferred(oldBirthdayBoy, newBirthdayBoy);
+        emit BirthdayBudTransferred(oldBirthdayBud, newBirthdayBud);
     }
 
-    function _getBirthdayBoyAccruedSupply() private view returns (uint256) {
-        return _getBirthdaySupply() - _totalSupplySpentByBirthdayBoy;
+    function _getBirthdayBudAccruedSupply() private view returns (uint256) {
+        return _getBirthdaySupply() - _totalSupplySpentByBirthdayBud;
     }
 
     function _getBirthdaySupply() private view returns (uint256) {
@@ -123,11 +134,11 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
     }
 
     function _getSpencersAgeSeconds() private view returns (uint256) {
-        return block.timestamp - SPENCERS_BIRTHDAY_UTC;
+        return block.timestamp - _birthdayUtcSeconds;
     }
 
-    function _isBirthdayBoy(address account) private view returns (bool) {
-        return birthdayBoy == account;
+    function _isBirthdayBud(address account) private view returns (bool) {
+        return _birthdayBud == account;
     }
 
     function _transfer(
@@ -135,13 +146,13 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
         address recipient,
         uint256 amount
     ) private {
-        require(sender != address(0), "SpencePence: transfer from the zero address");
-        require(recipient != address(0), "SpencePence: transfer to the zero address");
+        require(sender != address(0), "BirthdayBucks: transfer from the zero address");
+        require(recipient != address(0), "BirthdayBucks: transfer to the zero address");
 
         uint256 senderBalance = balanceOf(sender);
-        require(senderBalance >= amount, "SpencePence: transfer amount exceeds balance");
-        if (_isBirthdayBoy(sender)) {
-            _reduceBirthdayBoyBalance(amount);
+        require(senderBalance >= amount, "BirthdayBucks: transfer amount exceeds balance");
+        if (_isBirthdayBud(sender)) {
+            _reduceBirthdayBudBalance(amount);
         } else {
             _balances[sender] = senderBalance - amount;
         }
@@ -151,23 +162,23 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
         emit Transfer(sender, recipient, amount);
     }
 
-    function _reduceBirthdayBoyBalance(uint256 amount) private {
+    function _reduceBirthdayBudBalance(uint256 amount) private {
         uint256 remainingAmount = amount;
-        uint256 accruedSupply = _getBirthdayBoyAccruedSupply();
+        uint256 accruedSupply = _getBirthdayBudAccruedSupply();
 
         if (remainingAmount > 0 && accruedSupply > 0) {
             if (remainingAmount >= accruedSupply) {
-                _totalSupplySpentByBirthdayBoy += accruedSupply;
+                _totalSupplySpentByBirthdayBud += accruedSupply;
                 remainingAmount -= accruedSupply;
             } else {
-                _totalSupplySpentByBirthdayBoy += remainingAmount;
+                _totalSupplySpentByBirthdayBud += remainingAmount;
                 remainingAmount = 0;
             }
         }
 
         if (remainingAmount > 0) {
-            assert(_balances[birthdayBoy] >= remainingAmount);
-            _balances[birthdayBoy] -= remainingAmount;
+            assert(_balances[_birthdayBud] >= remainingAmount);
+            _balances[_birthdayBud] -= remainingAmount;
         }
     }
 
@@ -176,8 +187,8 @@ contract SpencePence is Context, IERC20, IERC20Metadata {
         address spender,
         uint256 amount
     ) internal {
-        require(owner != address(0), "SpencePence: approve from the zero address");
-        require(spender != address(0), "SpencePence: approve to the zero address");
+        require(owner != address(0), "BirthdayBucks: approve from the zero address");
+        require(spender != address(0), "BirthdayBucks: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);

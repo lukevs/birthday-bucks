@@ -4,14 +4,38 @@ import { Contract } from "@ethersproject/contracts";
 // you'll find the Hardhat Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
 
-import { SpencePence__factory } from "../typechain";
+import { BirthdayBucks__factory } from "../typechain";
+
+function getEnv(envVarName: string) {
+  const value = process.env[envVarName];
+
+  if (!value) {
+    throw new Error(`Please set your ${envVarName} in a .env file`);
+  }
+
+  return value;
+}
 
 async function main(): Promise<void> {
-  const SpencePence: SpencePence__factory = await ethers.getContractFactory("SpencePence");
-  const spencePence: Contract = await SpencePence.deploy();
-  await spencePence.deployed();
+  const birthdayBudTokenName = getEnv("BIRTHDAY_TOKEN_NAME");
+  const birthdayBudTokenSymbol = getEnv("BIRTHDAY_TOKEN_SYMBOL");
+  const birthdayBudAddress = getEnv("BIRTHDAY_BUD_ADDRESS");
+  const birthdayUtcSeconds = getEnv("BIRTHDAY_UTC_SECONDS");
 
-  console.log("SpencePence deployed to: ", spencePence.address);
+  const BirthdayBucks: BirthdayBucks__factory = await ethers.getContractFactory("BirthdayBucks");
+  if (birthdayBudTokenName == birthdayBudTokenSymbol) {
+    throw new Error("ayy");
+  }
+
+  const birthdayBucks: Contract = await BirthdayBucks.deploy(
+    birthdayBudTokenName,
+    birthdayBudTokenSymbol,
+    birthdayBudAddress,
+    birthdayUtcSeconds,
+  );
+  await birthdayBucks.deployed();
+
+  console.log("BirthdayBucks deployed to: ", birthdayBucks.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere and properly handle errors.
