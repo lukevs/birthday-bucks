@@ -3,7 +3,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "_birthdayBoy",
+        "name": "birthdayBoy",
         "type": "address"
       }
     ],
@@ -41,17 +41,17 @@
       {
         "indexed": true,
         "internalType": "address",
-        "name": "previousBirthdayBoy",
+        "name": "previousBirthdayBud",
         "type": "address"
       },
       {
         "indexed": true,
         "internalType": "address",
-        "name": "newBirthdayBoy",
+        "name": "newBirthdayBud",
         "type": "address"
       }
     ],
-    "name": "BirthdayBoyTransferred",
+    "name": "BirthdayBudTransferred",
     "type": "event"
   },
   {
@@ -148,7 +148,7 @@
   },
   {
     "inputs": [],
-    "name": "birthdayBoy",
+    "name": "birthdayBud",
     "outputs": [
       {
         "internalType": "address",
@@ -230,7 +230,7 @@
         "type": "string"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -243,7 +243,7 @@
         "type": "string"
       }
     ],
-    "stateMutability": "pure",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -287,7 +287,7 @@
     "inputs": [
       {
         "internalType": "address",
-        "name": "newBirthdayBoy",
+        "name": "newBirthdayBud",
         "type": "address"
       }
     ],

@@ -88,11 +88,11 @@ describe("Unit tests", function () {
     it("should not allow transfers larger than supply", async function () {
       await expect(
         spencePence.connect(birthdayBoy).transfer(notBirthdayBoy.address, await asPence(1000)),
-      ).to.be.revertedWith("SpencePence: transfer amount exceeds balance");
+      ).to.be.revertedWith("BirthdayBucks: transfer amount exceeds balance");
 
       await expect(
         spencePence.connect(notBirthdayBoy).transfer(birthdayBoy.address, await asPence(1000)),
-      ).to.be.revertedWith("SpencePence: transfer amount exceeds balance");
+      ).to.be.revertedWith("BirthdayBucks: transfer amount exceeds balance");
     });
 
     it("should support transfering the birthday boy", async function () {
